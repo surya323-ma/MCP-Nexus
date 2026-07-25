@@ -1,0 +1,45 @@
+services:
+  # ---------------------------------------------------------------- MCP file server
+  - type: web
+    name: mcp-file-server
+    runtime: python
+    plan: free
+    rootDir: file_server
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: FILE_SERVER_BASE_DIR
+        value: /tmp/mcp_files
+
+  # -------------------------------------------------------------- MCP search server
+  - type: web
+    name: mcp-search-server
+    runtime: python
+    plan: free
+    rootDir: search_server
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: TAVILY_API_KEY
+        sync: false   # set manually in the Render dashboard
+
+  # ------------------------------------------------------------- Streamlit + agent
+  - type: web
+    name: mcp-ai-assistant
+    runtime: python
+    plan: free
+    rootDir: app
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false   # set manually in the Render dashboard
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      # Render blueprints can't append "/mcp" to a linked service's URL, so
+      # these two are filled in manually after the first deploy (see README) -
+      # e.g. https://mcp-file-server.onrender.com/mcp
+      - key: FILE_SERVER_URL
+        sync: false
+      - key: SEARCH_SERVER_URL
+        sync: false
